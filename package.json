@@ -1,8 +1,17 @@
 {
   "name": "fantasy_api",
   "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
   "dependencies": {
-    "express": "^4.10.6",
-    "mysql": "^2.5.4"
+    "async": "^1.2.1",
+    "bluebird": "^2.9.30",
+    "body-parser": "~1.12.4",
+    "debug": "^2.2.0",
+    "express": "~4.12.4",
+    "mysql": "^2.7.0",
+    "request": "^2.58.0"
   }
 }
