@@ -3,6 +3,7 @@ var db = require('../lib/db');
 var http       = require("http");
 //var url_api = "http://api.qualitysports.com.ve/api";
 var url_api = "http://10.181.4.89:3000/api/mock";
+//var url_api = "http://127.0.0.1:3000/api/mock";
 var access_token = "access_token=45eadc85b650776e48bdf666120d0fbc";
 
 exports.handle_database = function(req, res, sql) {
