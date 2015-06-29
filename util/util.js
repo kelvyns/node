@@ -1,11 +1,11 @@
-exports.massiveInsertFormat = function(table, columns, columnsUpdatem, allValues) {
+exports.massiveInsertFormat = function(table, columns, columnsUpdate, allValues) {
 	// table: 'tabla'
 	// columns: 'b,c'
 	// values :'["(1,2,3)", "(1,2,3)"]'
-	var column = columnsUpdatem.split(",");
+	var column = columnsUpdate.split(",");
 	var condition = [];
 	for (var i = 0; i < column.length; i++) { 
-	   condition[i]= column[i] + "= VALUES( " + column[i] + ")";
+	   condition[i]= column[i] + "= VALUES(" + column[i] + ")";
 	   
 	}
 	var values = allValues.toString();

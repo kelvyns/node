@@ -1,15 +1,17 @@
 var express = require('express');
 var request = require('request');
+var dateformat = require('dateformat');
 var async = require('async');
 var Promise = require('bluebird');
 // My own libraries
 var db = require('../lib/db');
+var util = require('../util/util');
+var error = require('../control_error/error');
 var teamModel = require('../models/team');
 
 var router = express.Router();
 
 var apiQB = {};
-
 apiQB.urls = [];
 apiQB.urls['base'] = 'http://api.qualitysports.com.ve/api/';
 //apiQB.urls['base'] = 'http://10.181.4.89:3000/api/mock/';
@@ -31,13 +33,15 @@ apiQB.getUrl = function(urlName, params) {
 
 apiQB.getTeam = function(idTeam, callback) {
     var url = apiQB.getUrl('teams', { 'id_equipo': idTeam });
-    request(url, function(error, response, body) {
+    request(url, function(err, response, body) {
         //console.log(response.statusCode);
         //TODO handle 500, 401, 403 etc
         if (response.statusCode != 200) {
-            //console.log(body);
             //TODO return error
-            callback('error', null);
+            // error code, moreDescription, data
+            error.registerInBD(err, '100200', 'Error with idTeam:'+ idTeam);
+
+            callback(err, null);
         } else {
             var teamData = JSON.parse(body);
             if (!teamData.data){
@@ -53,7 +57,7 @@ apiQB.getTeam = function(idTeam, callback) {
 router.get('/tibu', function(req, res, next) {
     db.query("select * from team where id = 1", function(err, rows, fields){
         res.json(rows);
-    })
+    });
 });
 
 /* GET teams listing. (callback hell sample) */
@@ -248,5 +252,90 @@ router.get('/promises3', function(req, res, next) {
         res.send(result);
     });
 });
+
+
+apiQB.insertTeam = function(teams, callback) {
+
+    var allValues = [];
+    var data = null;
+    var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
+
+    if(teams!=null && teams.length == 8) {
+        for (var i = 0; i < teams.length; ++i) {
+            data =  teams[i];
+            allValues.push(
+                "(" +
+                parseInt(data.id_equipo) + "," +
+                "'" + data.nombre_equipo  + "'" + "," +
+                "'" + data.nombre_completo  + "'" + "," +
+                "'" + data.nick_equipo  + "'" + "," +
+                "'" + data.ciudad  + "'" + "," +
+                "'" + data.sede  + "'" + "," +
+                parseInt(data.sede_capacidad.replace(".","")) + "," +
+                "'" + data.manager  + "'" + "," +
+                "'" + date + "'" +
+                ")"
+            );
+        }
+
+        var table = "TEAM";
+        var columns = "id,name,full_name,nick,city,stadium,stadium_capacity,manager,last_updated";
+        var columnsUpdate = "name,full_name,nick,city,stadium,stadium_capacity,manager,last_updated";
+        var sql = util.massiveInsertFormat(table,columns,columnsUpdate,allValues);
+        db.query(sql, function(err, rows){
+           if(err){
+               error.registerInBD(err, '100202');
+               if(err)
+               callback(err, null);
+           }else {
+               callback(null, rows);
+           }
+
+
+        });
+
+
+
+    }else {
+        //console.log(body);
+        //TODO return error
+        callback('error', null);
+    }
+
+
+
+};
+
+
+router.get('/init', function(req, res, next) {
+    var teams = [];
+    for (var i = 1; i < 9; ++i) {
+        teams.push(apiQB.getTeamAsync(i));
+    }
+
+    //Se pasa... xD
+    Promise.all(teams).then(function(teams) {
+        apiQB.insertTeam(teams,function(err, rows) {
+            if(err){
+                res.json({"code" : '100202', "status" : "err", "description" :  error.genericUnexpectedError});
+            }else {
+                db.getAll(db.table.team, function(err, teams) {
+                    if(err){
+                        error.registerInBD(err, '100203');
+                        res.json({"code" : '100203', "status" : "err", "description" :  error.genericUnexpectedError});
+                    }else {
+                        //TODO Ahora si aqui debemos insertar los jugadores de cada equipo
+                        res.json({"code" : 0, "status" : "Success Team", "teams" : teams});
+                    }
+                });
+
+            }
+        });
+    }).catch(function(e) {
+        //Catch any unexpected errors
+        res.json({"code" : '100201', "status" : "err", "description" : error.genericConecctionError});
+    });
+});
+
 
 module.exports = router;
