@@ -13,20 +13,44 @@ var router = express.Router();
 
 var apiQB = {};
 apiQB.urls = [];
-apiQB.urls['base'] = 'http://api.qualitysports.com.ve/api/';
-//apiQB.urls['base'] = 'http://10.181.4.89:3000/api/mock/';
+//apiQB.urls['base'] = 'http://api.qualitysports.com.ve/api/';
+apiQB.urls['base'] = 'http://10.181.4.89:3000/api/mock/';
 apiQB.urls['teams'] = 'equipo' ;
+apiQB.urls['roster'] = 'roster' ;
 apiQB.accessToken = '45eadc85b650776e48bdf666120d0fbc';
-
 var request = request.defaults({
     baseUrl: apiQB.urls['base'],
     method: 'GET'
 });
 
+var apiLocal = {};
+apiLocal.urls = [];
+apiLocal.urls['base'] = 'http://10.181.4.89:3000/team/';
+apiLocal.urls['registerTeam'] = 'registerTeam' ;
+
+apiLocal.accessToken = 'myTokenLocal';
+var requestLocal = request.defaults({
+    baseUrl: apiLocal.urls['base'],
+    method: 'GET'
+});
+
+
+var dataBase = {};
+
 apiQB.getUrl = function(urlName, params) {
     var url = apiQB.urls[urlName] + '?access_token=' + apiQB.accessToken;
     for (var key in params) {
         url += '&'+key+'='+params[key];
+    }
+    return url;
+};
+
+apiLocal.getUrl = function(urlName, params) {
+    var url = apiLocal.urls[urlName] + '?access_token=' + apiLocal.accessToken;
+    if(params) {
+    	for (var key in params) {
+	        url += '&'+key+'='+params[key];
+	    }
     }
     return url;
 };
@@ -39,13 +63,13 @@ apiQB.getTeam = function(idTeam, callback) {
         if (response.statusCode != 200) {
             //TODO return error
             // error code, moreDescription, data
-            error.registerInBD(err, '100200', 'Error with idTeam:'+ idTeam);
-
+            error.registerInBD(err, '100200', 'Error, getTeam with idTeam:'+ idTeam);
             callback(err, null);
         } else {
             var teamData = JSON.parse(body);
             if (!teamData.data){
-                throw new Error('no data for team');
+            	error.registerInBD(error.jsonDefault, '100205', error.genericUnexpectedError);
+            	callback(error.jsonDefault, null);
             } else {
                 callback(null, teamData.data.rows);
             }
@@ -53,214 +77,59 @@ apiQB.getTeam = function(idTeam, callback) {
     });
 };
 
-
-router.get('/tibu', function(req, res, next) {
-    db.query("select * from team where id = 1", function(err, rows, fields){
-        res.json(rows);
-    });
-});
-
-/* GET teams listing. (callback hell sample) */
-router.get('/', function(req, res, next) {
-    var teams = [];
-
-    //Team 1
-    apiQB.getTeam(1, function(error, team){
-        teams.push(team);
-        //Team 2
-        apiQB.getTeam(2, function(error, team){
-            teams.push(team);
-            //Team 3
-            apiQB.getTeam(3, function(error, team){
-                teams.push(team);
-                //Team 4
-                apiQB.getTeam(4, function(error, team){
-                    teams.push(team);
-                    //Team 5
-                    apiQB.getTeam(5, function(error, team){
-                        teams.push(team);
-                        //Team 6
-                        apiQB.getTeam(6, function(error, team){
-                            teams.push(team);
-                            //Team 7
-                            apiQB.getTeam(7, function(error, team){
-                                teams.push(team);
-                                //Team 8
-                                apiQB.getTeam(8, function(error, team){
-                                    teams.push(team);
-                                    //After loading 8 teams, callback
-                                    teamModel.updateTeams(teams);
-                                    res.json(teams);
-                                });
-                            });
-                        });
-                    });
-
-                });
-            });
-        });
-    });
-});
-
-/* GET teams listing. (simplified callback hell) */
-router.get('/callback2', function(req, res, next) {
-    var teams = [];
-    var done = false;
-    var callbackCount = 0;
-    for (var i = 1; i < 9; i++){
-        apiQB.getTeam(i, function(error, team) {
-            teams.push(team);
-            callbackCount++;
-            if (callbackCount == 8) {
-                teamModel.updateTeams(teams);
-                res.json(teams);
-                done = true;
+apiQB.getRoster = function(idTeam, callback) {
+    var url = apiQB.getUrl('roster', { 'id_equipo': idTeam });
+    //console.log(url);
+    request(url, function(err, response, body) {
+        //console.log(response.statusCode);
+        //TODO handle 500, 401, 403 etc
+        if (response.statusCode != 200) {
+            //TODO return error
+            // error code, moreDescription, data
+            error.registerInBD(err, '100207', 'Error, getRoster with idTeam:'+ idTeam);
+            callback(err, null);
+        } else {
+            var rosterData = JSON.parse(body);
+            if (!rosterData.data){
+            	error.registerInBD(error.jsonDefault, '100206', error.genericUnexpectedError);
+            	callback(error.jsonDefault, null);
+            } else {
+            	var dataRows = rosterData.data.rows; 
+            	dataRows.id_equipo = idTeam;
+                callback(null, rosterData.data.rows);
             }
-        });
-    }
-});
+        }
+    });
+};
 
-/* GET teams listing. (using async) */
-router.get('/async1', function(req, res, next) {
-    var teams = [];
-    var idTeams = [1,2,3,4,5,6,7,8];
-
-    //Parallel calls, for each team id call the api
-    async.each(idTeams, function(id, callback) {
-        apiQB.getTeam(id, function(error, team) {
-            //TODO handle error
-            teams.push(team);
-            callback(); //callback is required in order to let each no this iteration is finished
-        })
-    }, function(err){ //this function is called when all the previous call are completed
-        if( err ) {
-            console.log('A file failed to process');
+apiLocal.getTeams = function(callback) {
+	var url = apiLocal.getUrl('registerTeam');
+    requestLocal(url, function(err, response, body) {
+        //console.log(response.statusCode);
+        //TODO handle 500, 401, 403 etc
+        if (response.statusCode != 200) {
+            //TODO return error
+            // error code, moreDescription, data
+            error.registerInBD(err, '100300', 'Error, registerRoster with idTeam:'+ idTeam);
+            callback(err, null);
         } else {
-            console.log(teams);
+            var data = JSON.parse(body);
+            if (!data){
+            	error.registerInBD(error.jsonDefault, '100301', error.genericUnexpectedError);
+            	callback(error.jsonDefault, null);
+            } else {
+            	callback(null, data.teams);
+            }
         }
-        res.json(teams);
     });
-});
+};
 
-/* GET teams listing. (using async) */
-router.get('/async2', function(req, res, next) {
-    var teams = [];
-    var idTeams = [1,2,3,4,5,6,7,8];
-
-    //Sequential calls, for each team id call the api
-    async.eachSeries(idTeams, function(id, callback) {
-        apiQB.getTeam(id, function(error, team) {
-            //TODO handle error
-            teams.push(team);
-            callback(); //callback is required in order to let each no this iteration is finished
-        })
-    }, function(err){ //this function is called when all the previous call are completed
-        if( err ) {
-            console.log('A file failed to process');
-        } else {
-            console.log(teams);
-        }
-        res.json(teams);
-    });
-});
-
-/** Promises **/
-
-/* GET teams listing. (using async) */
-router.get('/asyncWithNumbers', function(req, res, next) {
-    var teams = [];
-    var idTeams = [1,2,3,4,5,6,7,8];
-
-    async.each(idTeams, function(id, callback) {
-        async.setImmediate(function () {
-            callback(null, teams.push(id));
-        });
-    }, function(err){
-        if( err ) {
-            console.log('A file failed to process');
-        } else {
-            console.log(teams);
-        }
-        res.send("done");
-    });
-});
-
-/* GET teams listing. (using async) mejor q each*/
-router.get('/async3', function(req, res, next) {
-    var idTeams = [1, 2];
-    //Sequential calls, for each team id call the api
-    async.map(idTeams, apiQB.getTeam, function(error, result) {
-        if (error) {
-            console.log(error);
-        }
-        res.json(result);
-    });
-});
-
-
-//var options = {};
-//
-//var current = Promise.resolve();
-//var idTeams = [1,2,3,4,5,6,7,8];
-//
-//apiQB.getTeamAsync(id).then(function(a,b){
-//    console.log(a);
-//    console.log(b);
-//})
-Promise.promisifyAll(apiQB);
-
-router.get('/promises1', function(req, res, next) {
-    var id = 1;
-    apiQB.getTeamAsync(id).then(function(a){
-        res.json(a);
-    });
-});
-
-router.get('/promises2', function(req, res, next) {
-    Promise.resolve().then(function() {
-        //Get 3 teams
-        return [apiQB.getTeamAsync(1), apiQB.getTeamAsync(2), apiQB.getTeamAsync(10000)] ;
-    }).spread(function(team1, team2, team3) {
-        //Combine in one array
-        var teams = [];
-        teams.push(team1);
-        teams.push(team2);
-        teams.push(team3);
-        return teams;
-    }).then(function(val){
-        //Print in the response
-        res.json(val);
-    }).catch(TypeError, function(err) {
-        err.forEach(function(e) {
-            console.error(e.stack);
-        });
-    }).catch(Error, function(err) {
-        err.forEach(function(e) {
-            console.error(e.stack);
-        });
-    });
-});
-
-router.get('/promises3', function(req, res, next) {
-    var teams = [];
-    for (var i = 1; i < 9; ++i) {
-        teams.push(apiQB.getTeamAsync(i));
-    }
-
-    //Se pasa... xD
-    Promise.all(teams).then(function(result) {
-        res.send(result);
-    });
-});
-
-
-apiQB.insertTeam = function(teams, callback) {
-
-    var allValues = [];
+dataBase.insertTeam = function(teams, callback) {
+	var allValues = [];
     var data = null;
     var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
 
-    if(teams!=null && teams.length == 8) {
+    if(teams!=null && teams != undefined && teams.length == 8) {
         for (var i = 0; i < teams.length; ++i) {
             data =  teams[i];
             allValues.push(
@@ -293,38 +162,129 @@ apiQB.insertTeam = function(teams, callback) {
 
 
         });
-
-
-
     }else {
-        //console.log(body);
-        //TODO return error
-        callback('error', null);
+       error.registerInBD(error.jsonDefault, '100204', error.genericUnexpectedError);
+       callback(error.jsonDefault, null);
     }
-
-
-
 };
 
+dataBase.insertPrimaryPlayer = function(rosters, callback) {
+	
+	if(rosters!=null && rosters != undefined && rosters.length == 8) {
+		var players= [];
+		
+		// Get the list of player from  each roster team
+		var total = 0;
+		for (var i = 0; i < rosters.length; ++i) {
+			var cant = 0;
+			console.log('equipo: ' + rosters[i].id_equipo);
+			 if(rosters[i].pitchers){
+				var pichers = rosters[i].pitchers;
+				console.log(' pichers.length: ' +  pichers.length);
+				cant = cant + pichers.length;
+				for (var p = 0; p < pichers.length; ++p) {
+					var picher = pichers[p];
+					picher.position_id = 1;
+					picher.id_equipo = rosters[i].id_equipo;
+					players.push(picher);
+				}
+			 }
+			 if(rosters[i].catchers){
+				var catchers = rosters[i].catchers;
+				console.log(' catchers.length: ' +  catchers.length);
+				cant = cant + catchers.length;
+				for (var c = 0; c < catchers.length; ++c) {
+					var catcher = catchers[c];
+					catcher.position_id = 2;
+					catcher.id_equipo = rosters[i].id_equipo;
+					players.push(catcher);	
+				}
+			 }
+			 if(rosters[i].infielders){
+				 var infielders = rosters[i].infielders;
+				 console.log(' infielders.length: ' +  infielders.length);
+				 cant = cant + infielders.length;
+				 for (var inf = 0; inf < infielders.length; ++inf) {
+					var infielder = infielders[inf];
+					infielder.position_id = 0;
+					infielder.id_equipo = rosters[i].id_equipo;
+					players.push(infielder);	
+				 }
+			 }
+			 if(rosters[i].outfielders){
+				 var outfielders = rosters[i].outfielders;
+				 console.log(' outfielders.length: ' +  outfielders.length);
+				 cant = cant + outfielders.length;
+				 for (var out = 0; out < outfielders.length; ++out) {
+					 var outfielder = outfielders[out];
+					 outfielder.position_id = 0;
+					 outfielder.id_equipo = rosters[i].id_equipo;
+					 players.push(outfielder);	
+				 }
+			 }
+			 console.log("cantidad total de jugadores por equipo: "+ cant );
+			 total = total + cant;
+		}
+		console.log("cantidad global de jugadores: "+ total );
+		var allValues = [];
+	    var data = null;
+	    var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
 
-router.get('/init', function(req, res, next) {
+	    console.log("cantidad de jugadores a insertar:" + players.length);
+        for (var i = 0; i < players.length; ++i) {
+            data =  players[i];
+            allValues.push(
+                "(" +
+                parseInt(data.id_jugador) + "," +
+                "'" + data.nombre  + "'" + "," +
+                "'" + data.apellido  + "'" + "," +
+                parseInt(data.id_equipo) + "," +
+                parseInt(data.position_id) + "," +
+                parseInt(data.numero_franela) + "," +
+                "'" + data.lugar_nacimiento  + "'" + "," +
+                "'" + date + "'" +
+                ")"
+            );
+        }
+        console.log("cantidad de jugadores a insertar allValues:" + allValues.length);
+        var table = "PLAYER";
+        var columns = "id,first_name,last_name,id_team,position_id,number,birth_place,last_updated";
+        var columnsUpdate = "first_name,last_name,id_team,position_id,number,birth_place,last_updated";
+        var sql = util.massiveInsertFormat(table,columns,columnsUpdate,allValues);
+        db.query(sql, function(err, rows){
+           if(err){
+               error.registerInBD(err, '100208');
+               if(err)
+               callback(err, null);
+           }else {
+               callback(null, rows);
+           }
+
+
+        });
+    } else {
+       error.registerInBD(error.jsonDefault, '100209', error.genericUnexpectedError);
+       callback(error.jsonDefault, null);
+    }
+};
+
+Promise.promisifyAll(apiQB);
+
+router.get('/registerTeam', function(req, res, next) {
     var teams = [];
     for (var i = 1; i < 9; ++i) {
         teams.push(apiQB.getTeamAsync(i));
     }
-
-    //Se pasa... xD
     Promise.all(teams).then(function(teams) {
-        apiQB.insertTeam(teams,function(err, rows) {
+    	dataBase.insertTeam(teams,function(err, rows) {
             if(err){
-                res.json({"code" : '100202', "status" : "err", "description" :  error.genericUnexpectedError});
+            	res.json(error.jsonError('100202'));
             }else {
                 db.getAll(db.table.team, function(err, teams) {
                     if(err){
                         error.registerInBD(err, '100203');
-                        res.json({"code" : '100203', "status" : "err", "description" :  error.genericUnexpectedError});
+                        res.json(error.jsonError('100203'));
                     }else {
-                        //TODO Ahora si aqui debemos insertar los jugadores de cada equipo
                         res.json({"code" : 0, "status" : "Success Team", "teams" : teams});
                     }
                 });
@@ -332,9 +292,75 @@ router.get('/init', function(req, res, next) {
             }
         });
     }).catch(function(e) {
-        //Catch any unexpected errors
-        res.json({"code" : '100201', "status" : "err", "description" : error.genericConecctionError});
+    	res.json(error.jsonError('100201', error.genericConecctionError));
     });
+});
+
+Promise.promisifyAll(apiLocal);
+
+router.get('/registerRoster', function(req, res, next) {
+	
+	var rosters = [];
+	
+	apiLocal.getTeams(function (err, teams) {
+		if(err) {
+			error.registerInBD(err, '100302');
+            res.json(error.jsonError('100302'));
+		}else {
+			for (var i = 0; i < teams.length; ++i) {
+				rosters.push(apiQB.getRosterAsync(teams[i].id));
+			}
+			Promise.all(rosters).then(function(rosters) {
+				
+				dataBase.insertPrimaryPlayer(rosters,function(err, rows) {
+		            if(err){
+		            	res.json(error.jsonError('100210'));
+		            }else {
+		            	// Get all Pitcher
+		            	db.getAllByCondition(db.table.player, " position_id=1 ", function(err, pichers) {
+		                    if(err){
+		                        error.registerInBD(err, '100211');
+		                        res.json(error.jsonError('100211'));
+		                    }else {
+		                    	console.log("Cantidad jugadores BD: " + pichers.length);
+		                        // res.json({"code" : 0, "status" : "Success pichers", "pichers" : pichers, "total" : pichers.length});
+		                    	// Get all Players
+				            	db.getAllByCondition(db.table.player, " position_id<>1 ", function(err, players) {
+				                    if(err){
+				                        error.registerInBD(err, '100211');
+				                        res.json(error.jsonError('100211'));
+				                    }else {
+				                    	console.log("Cantidad jugadores BD: " + players.length);
+				                        res.json({"code" : 0, "status" : "Success", 
+				                        	"players" : players, "total players" : players.length,
+				                        	"pichers" : pichers, "total pichers" : pichers.length});
+				                    }
+				                });
+		                        
+		                    }
+		                });
+		            	/*
+		                db.getAll(db.table.player, function(err, pichers) {
+		                    if(err){
+		                        error.registerInBD(err, '100211');
+		                        res.json(error.jsonError('100211'));
+		                    }else {
+		                    	console.log("Cantidad jugadores BD: " + players.length);
+		                        res.json({"code" : 0, "status" : "Success players", "players" : players});
+		                    }
+		                });
+		            	*/	
+		            }
+		        });
+			  //res.json({"code" : 0, "status" : "Success rosters", "rosters" : rosters});
+		       
+		    }).catch(function(e) {
+		    	res.json(error.jsonError('100207', error.genericConecctionError));
+		    });
+		}
+	    
+	} );
+    
 });
 
 
