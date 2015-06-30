@@ -69,7 +69,7 @@ router.get("/api/mock",function(req,res){
 
 
 
-router.get("/api/mock/equipo/*",function(req,res){
+router.get("/api/mock/equipo*",function(req,res){
 	//
 	var id_equipo = req.query.id_equipo;
 	var access_token = req.query.access_token;
@@ -86,10 +86,39 @@ router.get("/api/mock/equipo/*",function(req,res){
 	
 });
 
-
-router.get("/api/mock/roster/*",function(req,res){
+router.get("/api/mock/biopelotero*",function(req,res){
 	//
-	console.log("epa");
+	var id_jugador = req.query.id_jugador;
+	var access_token = req.query.access_token;
+	var resString = '';
+	var data = '';
+	if( access_token == '45eadc85b650776e48bdf666120d0fbc') {
+		data = mock.biopelotero(parseInt(id_jugador), 5);
+	}else {
+		resString = '{"success":1,"message":"Registros recuperados","data":{"rows":{"httpcode":"403","error":"Forbidden","info":"No tiene los permisos necesarios para acceder a este recurso"}},"total":3}';
+		data = JSON.parse(resString);	
+	}
+	res.json(data);
+});
+
+router.get("/api/mock/biolanzador*",function(req,res){
+	//
+	var id_jugador = req.query.id_jugador;
+	var access_token = req.query.access_token;
+	var resString = '';
+	var data = '';
+	if( access_token == '45eadc85b650776e48bdf666120d0fbc') {
+		data = mock.biolanzador(parseInt(id_jugador), 4);
+	}else {
+		resString = '{"success":1,"message":"Registros recuperados","data":{"rows":{"httpcode":"403","error":"Forbidden","info":"No tiene los permisos necesarios para acceder a este recurso"}},"total":3}';
+		data = JSON.parse(resString);	
+	}
+	res.json(data);
+});
+
+
+router.get("/api/mock/roster*",function(req,res){
+	//
 	var id_equipo = req.query.id_equipo;
 	var access_token = req.query.access_token;
 	var resString = '';
