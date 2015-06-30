@@ -87,7 +87,7 @@ router.get("/api/mock/equipo/*",function(req,res){
 });
 
 
-router.get("/api/mock/roster*",function(req,res){
+router.get("/api/mock/roster/*",function(req,res){
 	//
 	console.log("epa");
 	var id_equipo = req.query.id_equipo;

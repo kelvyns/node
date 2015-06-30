@@ -62,6 +62,10 @@ error.code['100208'] = 'Cannot insert the list of first player in database';
 error.code['100209'] = 'Cannot gets the list of rosters from the fuction insertPrimaryPlayer';
 error.code['100210'] = 'Cannot insert the list of first player in database';
 error.code['100211'] = 'Cannot gets the list of first player from the database';
+error.code['100212'] = 'Cannot gets the player from the api league';
+error.code['100213'] = 'Invalid data from api league for getPlayer';
+error.code['100214'] = 'Cannot gets the picher from the api league';
+error.code['100215'] = 'Invalid data from api league for getPicher';
 
 // api local
 error.code['100300'] = 'Error to connect with api local';

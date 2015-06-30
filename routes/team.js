@@ -13,10 +13,12 @@ var router = express.Router();
 
 var apiQB = {};
 apiQB.urls = [];
-//apiQB.urls['base'] = 'http://api.qualitysports.com.ve/api/';
-apiQB.urls['base'] = 'http://10.181.4.89:3000/api/mock/';
+apiQB.urls['base'] = 'http://api.qualitysports.com.ve/api/';
+//apiQB.urls['base'] = 'http://10.181.4.89:3000/api/mock/';
 apiQB.urls['teams'] = 'equipo' ;
 apiQB.urls['roster'] = 'roster' ;
+apiQB.urls['player'] = 'biopelotero' ;
+apiQB.urls['picher'] = 'biolanzador' ;
 apiQB.accessToken = '45eadc85b650776e48bdf666120d0fbc';
 var request = request.defaults({
     baseUrl: apiQB.urls['base'],
@@ -25,7 +27,8 @@ var request = request.defaults({
 
 var apiLocal = {};
 apiLocal.urls = [];
-apiLocal.urls['base'] = 'http://10.181.4.89:3000/team/';
+//apiLocal.urls['base'] = 'http://10.181.4.89:3000/team/';
+apiLocal.urls['base'] = 'http://127.0.0.1:3000/team/';
 apiLocal.urls['registerTeam'] = 'registerTeam' ;
 
 apiLocal.accessToken = 'myTokenLocal';
@@ -77,9 +80,9 @@ apiQB.getTeam = function(idTeam, callback) {
     });
 };
 
-apiQB.getRoster = function(idTeam, callback) {
-    var url = apiQB.getUrl('roster', { 'id_equipo': idTeam });
-    //console.log(url);
+apiQB.getRoster = function(idTeam, season, period, callback) {
+    var url = apiQB.getUrl('roster', { 'id_equipo': idTeam, 'temporada':season, 'periodo':period });
+    console.log(url);
     request(url, function(err, response, body) {
         //console.log(response.statusCode);
         //TODO handle 500, 401, 403 etc
@@ -91,12 +94,62 @@ apiQB.getRoster = function(idTeam, callback) {
         } else {
             var rosterData = JSON.parse(body);
             if (!rosterData.data){
-            	error.registerInBD(error.jsonDefault, '100206', error.genericUnexpectedError);
-            	callback(error.jsonDefault, null);
+                error.registerInBD(error.jsonDefault, '100206', error.genericUnexpectedError);
+                callback(error.jsonDefault, null);
             } else {
-            	var dataRows = rosterData.data.rows; 
-            	dataRows.id_equipo = idTeam;
+                var dataRows = rosterData.data.rows;
+                dataRows.id_equipo = idTeam;
                 callback(null, rosterData.data.rows);
+            }
+        }
+    });
+};
+
+apiQB.getPlayer = function(idPlayer, callback) {
+    var url = apiQB.getUrl('player', { 'id_jugador': idPlayer });
+    console.log(url);
+    request(url, function(err, response, body) {
+        //console.log(response.statusCode);
+        //TODO handle 500, 401, 403 etc
+        if (response.statusCode != 200) {
+            //TODO return error
+            // error code, moreDescription, data
+            error.registerInBD(err, '100212', 'Error, getPlayer with idPlayer:'+ idPlayer);
+            callback(err, null);
+        } else {
+            var playerData = JSON.parse(body);
+            if (!playerData.data){
+                error.registerInBD(error.jsonDefault, '100213', error.genericUnexpectedError);
+                callback(error.jsonDefault, null);
+            } else {
+                var player = playerData.data.rows;
+                console.log(player[0].id_jugador);
+                callback(null, player[0]);
+            }
+        }
+    });
+};
+
+apiQB.getPicher = function(idPlayer, callback) {
+    var url = apiQB.getUrl('picher', { 'id_jugador': idPlayer });
+    console.log(url);
+    request(url, function(err, response, body) {
+        //console.log(response.statusCode);
+        //TODO handle 500, 401, 403 etc
+        if (response.statusCode != 200) {
+            //TODO return error
+            // error code, moreDescription, data
+            error.registerInBD(err, '100214', 'Error, getPicher with idPlayer:'+ idPlayer);
+            callback(err, null);
+        } else {
+            var picherData = JSON.parse(body);
+            if (!picherData.data){
+                error.registerInBD(error.jsonDefault, '100215', error.genericUnexpectedError);
+                callback(error.jsonDefault, null);
+            } else {
+                var picher = picherData.data.rows;
+                console.log(picher[0].id_jugador);
+                callback(null, picher[0]);
             }
         }
     });
@@ -301,14 +354,16 @@ Promise.promisifyAll(apiLocal);
 router.get('/registerRoster', function(req, res, next) {
 	
 	var rosters = [];
-	
+    var season = req.query.season; // 2014
+    var period = req.query.period; //  (Periodo : TR, RR , F)
 	apiLocal.getTeams(function (err, teams) {
 		if(err) {
 			error.registerInBD(err, '100302');
             res.json(error.jsonError('100302'));
 		}else {
+
 			for (var i = 0; i < teams.length; ++i) {
-				rosters.push(apiQB.getRosterAsync(teams[i].id));
+				rosters.push(apiQB.getRosterAsync(teams[i].id, season, period ));
 			}
 			Promise.all(rosters).then(function(rosters) {
 				
@@ -317,25 +372,40 @@ router.get('/registerRoster', function(req, res, next) {
 		            	res.json(error.jsonError('100210'));
 		            }else {
 		            	// Get all Pitcher
-		            	db.getAllByCondition(db.table.player, " position_id=1 ", function(err, pichers) {
+		            	db.getAllByCondition(db.table.player, " position_id=1 ", function(err, pichers) {//and id_team=4"
 		                    if(err){
 		                        error.registerInBD(err, '100211');
 		                        res.json(error.jsonError('100211'));
 		                    }else {
-		                    	console.log("Cantidad jugadores BD: " + pichers.length);
+                                var arrPichers = [];
+		                    	console.log("Cantidad picheres en BD: " + pichers.length);
 		                        // res.json({"code" : 0, "status" : "Success pichers", "pichers" : pichers, "total" : pichers.length});
 		                    	// Get all Players
-				            	db.getAllByCondition(db.table.player, " position_id<>1 ", function(err, players) {
-				                    if(err){
-				                        error.registerInBD(err, '100211');
-				                        res.json(error.jsonError('100211'));
-				                    }else {
-				                    	console.log("Cantidad jugadores BD: " + players.length);
-				                        res.json({"code" : 0, "status" : "Success", 
-				                        	"players" : players, "total players" : players.length,
-				                        	"pichers" : pichers, "total pichers" : pichers.length});
-				                    }
-				                });
+                                for (var i = 0; i < pichers.length; ++i) {
+                                    arrPichers.push(apiQB.getPicherAsync(pichers[i].id));
+                                }
+                                Promise.all(arrPichers).then(function(allPichers) {
+                                    db.getAllByCondition(db.table.player, " position_id<>1  ", function(err, players) {// and id_team=4"
+                                        if(err){
+                                            error.registerInBD(err, '100211');
+                                            res.json(error.jsonError('100211'));
+                                        }else {
+                                            var arrPlayers = [];
+                                            console.log("Cantidad player BD: " + players.length);
+                                            for (var i = 0; i < players.length; ++i) {
+                                                arrPlayers.push(apiQB.getPlayerAsync(players[i].id));
+                                            }
+                                            Promise.all(arrPlayers).then(function(allPlayers) {
+                                                res.json({"code" : 0, "status" : "Success",
+                                                    "players" : allPlayers, "total players" : allPlayers.length,
+                                                    "pichers" : allPichers, "total pichers" : allPichers.length});
+                                            });
+
+                                        }
+                                    });
+                                });
+
+
 		                        
 		                    }
 		                });

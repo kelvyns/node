@@ -4,7 +4,7 @@ CREATE TABLE `PLAYER` (
   `last_name` varchar(45) DEFAULT NULL,
   `id_team` int(11) DEFAULT NULL,
   `position` varchar(2) DEFAULT NULL,
-  `positon_id` int(11) DEFAULT NULL,
+  `position_id` int(11) DEFAULT NULL,
   `throwing_hand` varchar(1) DEFAULT NULL,
   `batting_hand` varchar(1) DEFAULT NULL,
   `number` int(11) DEFAULT NULL COMMENT 'Numero de franela',
@@ -13,6 +13,7 @@ CREATE TABLE `PLAYER` (
   `status` enum('active','injured') DEFAULT NULL,
   `status_date` varchar(45) DEFAULT NULL,
   `price` varchar(45) DEFAULT NULL,
+  `last_updated` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
