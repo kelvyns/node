@@ -9,6 +9,7 @@ var util = require('../util/util');
 var error = require('../control_error/error');
 var teamModel = require('../models/team');
 
+var sleep = 100;
 var router = express.Router();
 
 var apiQB = {};
@@ -29,13 +30,19 @@ var apiLocal = {};
 apiLocal.urls = [];
 //apiLocal.urls['base'] = 'http://10.181.4.89:3000/team/';
 apiLocal.urls['base'] = 'http://127.0.0.1:3000/team/';
-apiLocal.urls['registerTeam'] = 'registerTeam' ;
+
+apiLocal.urls['registerInitialRoster'] = 'registerInitialRoster' ;
+apiLocal.urls['updatePicher'] = 'updatePicher' ;
+apiLocal.urls['updatePlayer'] = 'updatePlayer' ;
+apiLocal.urls['registerTeam'] = 'registerTeam';
+
 
 apiLocal.accessToken = 'myTokenLocal';
 var requestLocal = request.defaults({
     baseUrl: apiLocal.urls['base'],
     method: 'GET'
 });
+
 
 var dataBase = {};
 
@@ -79,82 +86,94 @@ apiQB.getTeam = function(idTeam, callback) {
     });
 };
 
-apiQB.getRoster = function(idTeam, season, period, callback) {
-    var url = apiQB.getUrl('roster', { 'id_equipo': idTeam, 'temporada':season, 'periodo':period });
-    console.log(url);
-    request(url, function(err, response, body) {
-        //console.log(response.statusCode);
-        //TODO handle 500, 401, 403 etc
-        if (response.statusCode != 200) {
-            //TODO return error
-            // error code, moreDescription, data
-            error.registerInBD(err, '100207', 'Error, getRoster with idTeam:'+ idTeam);
-            callback(err, null);
-        } else {
-            var rosterData = JSON.parse(body);
-            if (!rosterData.data){
-            	error.registerInBD(error.jsonDefault, '100206', error.genericUnexpectedError);
-            	callback(error.jsonDefault, null);
-            } else {
-            	var dataRows = rosterData.data.rows; 
-            	dataRows.id_equipo = idTeam;
-                callback(null, rosterData.data.rows);
-            }
-        }
-    });
+apiQB.getRoster = function(idTeam, season, period, id, callback) {
+	var timer = (sleep*id);
+    setTimeout(function () {  
+    	
+        var url = apiQB.getUrl('roster', { 'id_equipo': idTeam, 'temporada':season, 'periodo':period });
+        console.log(url);	
+	    request(url, function(err, response, body) {
+	        //console.log(response.statusCode);
+	        //TODO handle 500, 401, 403 etc
+	        if (response.statusCode != 200) {
+	            //TODO return error
+	            // error code, moreDescription, data
+	            error.registerInBD(err, '100207', 'Error, getRoster with idTeam:'+ idTeam);
+	            callback(err, null);
+	        } else {
+	            var rosterData = JSON.parse(body);
+	            if (!rosterData.data){
+	            	error.registerInBD(error.jsonDefault, '100206', error.genericUnexpectedError);
+	            	callback(error.jsonDefault, null);
+	            } else {
+	            	var dataRows = rosterData.data.rows; 
+	            	dataRows.id_equipo = idTeam;
+	            	console.log("id_equipo:" + idTeam);
+	            	callback(null, rosterData.data.rows);
+	                //callback(null, rosterData.data.rows);
+	            }
+	        }
+	    });
+    }, timer);
 };
 
-apiQB.getPlayer = function(idPlayer, callback) {
-    var url = apiQB.getUrl('player', { 'id_jugador': idPlayer });
-    console.log(url);
-    request(url, function(err, response, body) {
-        console.log(JSON.stringify(response));
-        //TODO handle 500, 401, 403 etc
-        if (response.statusCode != 200) {
-            //TODO return error
-            // error code, moreDescription, data
-            error.registerInBD(err, '100212', 'Error, getPlayer with idPlayer:'+ idPlayer);
-            callback(err, null);
-        } else {
-            var playerData = JSON.parse(body);
-            if (!playerData.data){
-                error.registerInBD(error.jsonDefault, '100213', error.genericUnexpectedError);
-                callback(error.jsonDefault, null);
-            } else {
-                var player = playerData.data.rows;
-                //console.log(player[0].id_jugador);
-                callback(null, player[0]);
-            }
-        }
-    });
+apiQB.getPlayer = function(idPlayer, id, callback) {
+	var timer = (sleep*id);
+    setTimeout(function () {
+	    var url = apiQB.getUrl('player', { 'id_jugador': idPlayer });
+	    //console.log(url);
+	    request(url, function(err, response, body) {
+	        //console.log(JSON.stringify(response));
+	        //TODO handle 500, 401, 403 etc
+	        if (response.statusCode != 200) {
+	            //TODO return error
+	            // error code, moreDescription, data
+	            error.registerInBD(err, '100212', 'Error, getPlayer with idPlayer:'+ idPlayer);
+	            callback(err, null);
+	        } else {
+	            var playerData = JSON.parse(body);
+	            if (!playerData.data){
+	                error.registerInBD(error.jsonDefault, '100213', error.genericUnexpectedError);
+	                callback(error.jsonDefault, null);
+	            } else {
+	                var player = playerData.data.rows;
+	                console.log(player[0].id_jugador);
+	                callback(null, player[0]);
+	            }
+	        }
+	    });
+    }, timer);
 };
 
-apiQB.getPicher = function(idPlayer, callback) {
-    var url = apiQB.getUrl('picher', { 'id_jugador': idPlayer });
-    //console.log(url);
-
-    request(url, function(err, response, body) {
-        console.log("error:" + JSON.stringify(err));
-    	console.log("response:" +JSON.stringify(response));
-        //console.log(response.statusCode);
-        //TODO handle 500, 401, 403 etc
-        if (err || (response && response.statusCode != 200)) {
-            //TODO return error
-            // error code, moreDescription, data
-            error.registerInBD(err, '100214', 'Error, getPicher with idPlayer:'+ idPlayer);
-            callback(err, null);
-        } else {
-            var picherData = JSON.parse(body);
-            if (!picherData.data){
-                error.registerInBD(error.jsonDefault, '100215', error.genericUnexpectedError);
-                callback(error.jsonDefault, null);
-            } else {
-                var picher = picherData.data.rows;
-                //console.log(picher[0].id_jugador);
-                callback(null, picher[0]);
-            }
-        }
-    });
+apiQB.getPicher = function(idPlayer, id, callback) {
+	var timer = (sleep*id);
+    setTimeout(function () {
+	    var url = apiQB.getUrl('picher', { 'id_jugador': idPlayer });
+	    //console.log(url);
+	   
+	    request(url, function(err, response, body) {
+	        //console.log("error:" + JSON.stringify(err));
+	    	//console.log("response:" +JSON.stringify(response));
+	        //console.log(response.statusCode);
+	        //TODO handle 500, 401, 403 etc
+	        if (err || (response && response.statusCode != 200)) {
+	            //TODO return error
+	            // error code, moreDescription, data
+	            error.registerInBD(err, '100214', 'Error, getPicher with idPlayer:'+ idPlayer);
+	            callback(err, null);
+	        } else {
+	            var picherData = JSON.parse(body);
+	            if (!picherData.data){
+	                error.registerInBD(error.jsonDefault, '100215', error.genericUnexpectedError);
+	                callback(error.jsonDefault, null);
+	            } else {
+	                var picher = picherData.data.rows;
+	                console.log("id: "+ id + " , "+ " id_picher" + picher[0].id_jugador);
+	                callback(null, picher[0]);
+	            }
+	        }
+	    });
+    }, timer);
 };
 
 apiLocal.getTeams = function(callback) {
@@ -362,7 +381,7 @@ dataBase.insertSecondaryPlayer = function(players, isPicher, callback) {
         var columns = "id,first_name,last_name,id_team,position, position_id, throwing_hand, batting_hand,number,birth_place, birth_country,last_updated";
         var columnsUpdate = "id_team,position, position_id, throwing_hand, batting_hand,number,birth_country,last_updated";
         var sql = util.massiveInsertFormat(table,columns,columnsUpdate,allValues);
-        console.log("sql:" + sql);
+       // console.log("sql:" + sql);
         db.query(sql, function(err, rows){
            if(err){
                error.registerInBD(err, '100208');//TODO agregar error
@@ -413,24 +432,58 @@ Promise.promisifyAll(apiLocal);
 
 
 /* GET teams listing. (simplified callback hell) */
-router.get('/time', function(req, res, next) {
-    var teams = [];
-    var done = false;
-    var callbackCount = 0;
-    for (var i = 1; i < 9; i++){
-        apiQB.getTeam(i, function(error, team) {
-            teams.push(team);
-            callbackCount++;
-            if (callbackCount == 8) {
-                teamModel.updateTeams(teams);
-                res.json(teams);
-                done = true;
-            }
-        });
-    }
+router.get('/init', function(req, res, next) {
+	
+	
+	requestLocal(apiLocal.getUrl('registerInitialRoster'), function(err, response, rosters) {
+        //console.log(response.statusCode);
+        //TODO handle 500, 401, 403 etc
+        if (err || response.statusCode != 200) {
+            //TODO return error
+            // error code, moreDescription, data
+            error.registerInBD(err, '100200', 'Error,dasasdasdasdasd ');
+            callback(err, null);
+        } else {
+        	//res.json({"code" : 0, "status" : "Success rosters", "rosters" : rosters});
+        	requestLocal(apiLocal.getUrl('updatePicher'), function(err, response, pichers) {
+                //console.log(response.statusCode);
+                //TODO handle 500, 401, 403 etc
+                if (err || response.statusCode != 200) {
+                    //TODO return error
+                    // error code, moreDescription, data
+                	 error.registerInBD(err, '100200', 'Error,dasasdasdasdasd ');
+                    callback(err, null);
+                } else {
+                	requestLocal(apiLocal.getUrl('updatePlayer'), function(err, response, players) {
+                        //console.log(response.statusCode);
+                        //TODO handle 500, 401, 403 etc
+                        if (err || response.statusCode != 200) {
+                        	 error.registerInBD(err, '100200', 'Error,dasasdasdasdasd ');
+                            callback(err, null);
+                        } else {
+                        	rosters = JSON.parse(rosters);
+                        	pichers = JSON.parse(pichers);
+                        	players = JSON.parse(players);
+                        	res.json({"code" : response.statusCode,
+                        			  "status" : "Success",
+                        			  "total rosters" : rosters.length,
+                        			  "total pichers" : pichers.length,
+                        			  "total players" : players.length,
+                        		      "rosters" : rosters, 
+                        		      "pichers" : pichers,
+                        		      "players" : players});
+                        }
+                    });
+                }
+            });
+            
+        }
+    });
+    
+    
 });
 
-router.get('/registerRoster', function(req, res, next) {
+router.get('/registerInitialRoster', function(req, res, next) {
 	
 	var rosters = [];
     var season = req.query.season; // 2014
@@ -442,7 +495,7 @@ router.get('/registerRoster', function(req, res, next) {
 		}else {
 
 			for (var i = 0; i < teams.length; ++i) {
-				rosters.push(apiQB.getRosterAsync(teams[i].id, season, period ));
+				rosters.push(apiQB.getRosterAsync(teams[i].id, season, period, i));
 			}
 			Promise.all(rosters).then(function(rosters) {
 				dataBase.insertPrimaryPlayer(rosters,function(err, rows) {
@@ -452,7 +505,6 @@ router.get('/registerRoster', function(req, res, next) {
 			        	db.getAll(db.table.player, function(err, allPlayers) {
 			        		res.json(allPlayers);
 			        	});
-			        	
 			        }
 			        //res.json({"code" : 0, "status" : "Success rosters", "rosters" : rosters});
 			    });
@@ -465,60 +517,44 @@ router.get('/registerRoster', function(req, res, next) {
     
 });
 
-router.get('/insertPicher', function(req, res, next) {
-	// Get all Pitcher
+router.get('/updatePicher', function(req, res, next) {
+	// Get all Picher
 	db.getAllByCondition(db.table.player, " position_id=1 ", function(err, pichers) {//and id_team=4"
         if(err){
             error.registerInBD(err, '100211');//TODO agregar error
             res.json(error.jsonError('100211'));//TODO agregar error
         }else {
             
-        	console.log("Cantidad picheres en BD: " + pichers.length);
-            //res.json({"code" : 0, "status" : "Success pichers", "pichers" : pichers, "total" : pichers.length});
-        	
+        	console.log("Cantidad pichers en BD: " + pichers.length);
         	var arrPichers = [];
-            var idPichers = [];
             
             for (var i = 0; i < pichers.length; ++i) {
-            	idPichers.push(pichers[i].id);
+            	arrPichers.push(apiQB.getPicherAsync(pichers[i].id, i));
 			}
+            
+			Promise.all(arrPichers).then(function(arrPichers) {
+				//res.json(arrPichers);
+				
+				dataBase.insertSecondaryPlayer(arrPichers, true, function(err){ //this function is called when all the previous call are completed
+                    if( err ) {
+                    	error.registerInBD(err, '100211');//TODO agregar error
+                        res.json(error.jsonError('100211'));//TODO agregar error
+                    } else {
+                    	//res.json(arrPlayers);
+                    	res.json({"Pichers" : arrPichers, "total" : arrPichers.length});
+                    }
+                });
+				
+		    }).catch(function(e) {
+		    	res.json(error.jsonError('100207', error.genericConecctionError));//TODO controlar error
+		    });
 
-            //Parallel calls, for each team id call the api
-            async.each(idPichers, function(id, callback) {
-
-                    apiQB.getPicher(id, function(error, picher) {
-                        //TODO handle error
-                        arrPichers.push(picher);
-                        callback(); //callback is required in order to let each no this iteration is finished
-
-                    })
-
-
-            }, function(err){ //this function is called when all the previous call are completed
-                if( err ) {
-                	error.registerInBD(err, '100211');//TODO agregar error
-                    res.json(error.jsonError('100211'));//TODO agregar error
-                } else {
-                	//res.json(arrPichers);
-                	dataBase.insertSecondaryPlayer(arrPichers, true, function(err){ //this function is called when all the previous call are completed
-                        if( err ) {
-                        	error.registerInBD(err, '100211');//TODO agregar error
-                            res.json(error.jsonError('100211'));//TODO agregar error
-                        } else {
-                        	//res.json(arrPichers);
-                        	res.json({"pichers" : arrPichers, "total" : arrPichers.length});
-                        }
-                    });
-                	//res.json({"pichers" : arrPichers, "total" : arrPichers.length});
-                }
-                
-            });
         }
     });
 });
 
-router.get('/insertPlayer', function(req, res, next) {
-	// Get all Pitcher
+router.get('/updatePlayer', function(req, res, next) {
+	// Get all Player
 	db.getAllByCondition(db.table.player, " position_id<>1 ", function(err, players) {//and id_team=4"
         if(err){
             error.registerInBD(err, '100211');//TODO agregar error
@@ -527,42 +563,30 @@ router.get('/insertPlayer', function(req, res, next) {
             
         	console.log("Cantidad players en BD: " + players.length);
         	var arrPlayers = [];
-            var idPlayers = [];
             
             for (var i = 0; i < players.length; ++i) {
-            	idPlayers.push(players[i].id);
+            	arrPlayers.push(apiQB.getPlayerAsync(players[i].id, i));
 			}
-
-            //Parallel calls, for each team id call the api
-            async.each(idPlayers, function(id, callback) {
-                apiQB.getPlayer(id, function(error, player) {
-                    //TODO handle error
-                	arrPlayers.push(player);
-                    callback(); //callback is required in order to let each no this iteration is finished
-                })
-            }, function(err){ //this function is called when all the previous call are completed
-                if( err ) {
-                	error.registerInBD(err, '100211');//TODO agregar error
-                    res.json(error.jsonError('100211'));//TODO agregar error
-                } else {
-                	//res.json(arrPlayers);
-                	dataBase.insertSecondaryPlayer(arrPlayers, false, function(err){ //this function is called when all the previous call are completed
-                        if( err ) {
-                        	error.registerInBD(err, '100211');//TODO agregar error
-                            res.json(error.jsonError('100211'));//TODO agregar error
-                        } else {
-                        	//res.json(arrPlayers);
-                        	res.json({"players" : arrPlayers, "total" : arrPlayers.length});
-                        }
-                    });
-                	//res.json({"pichers" : arrPichers, "total" : arrPichers.length});
-                }
+            
+			Promise.all(arrPlayers).then(function(arrPlayers) {
+				
+				dataBase.insertSecondaryPlayer(arrPlayers, false, function(err){ //this function is called when all the previous call are completed
+                    if( err ) {
+                    	error.registerInBD(err, '100211');//TODO agregar error
+                        res.json(error.jsonError('100211'));//TODO agregar error
+                    } else {
+                    	//res.json(arrPlayers);
+                    	res.json({"players" : arrPlayers, "total" : arrPlayers.length});
+                    }
+                });
                 
-            });
+		    }).catch(function(e) {
+		    	res.json(error.jsonError('100207', error.genericConecctionError));//TODO controlar error
+		    });
+
         }
     });
 });
 
 
 module.exports = router;
-
