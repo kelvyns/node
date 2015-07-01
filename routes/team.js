@@ -131,12 +131,14 @@ apiQB.getPlayer = function(idPlayer, callback) {
 
 apiQB.getPicher = function(idPlayer, callback) {
     var url = apiQB.getUrl('picher', { 'id_jugador': idPlayer });
-    console.log(url);
+    //console.log(url);
+
     request(url, function(err, response, body) {
-    	// console.log(JSON.stringify(response));
+        console.log("error:" + JSON.stringify(err));
+    	console.log("response:" +JSON.stringify(response));
         //console.log(response.statusCode);
         //TODO handle 500, 401, 403 etc
-        if (response.statusCode != 200) {
+        if (err || (response && response.statusCode != 200)) {
             //TODO return error
             // error code, moreDescription, data
             error.registerInBD(err, '100214', 'Error, getPicher with idPlayer:'+ idPlayer);
@@ -321,7 +323,7 @@ dataBase.insertPrimaryPlayer = function(rosters, callback) {
     }
 };
 
-dataBase.insertSecondaryPlayer = function(players, callback) {
+dataBase.insertSecondaryPlayer = function(players, isPicher, callback) {
 	
 	if(players!=null && players != undefined) {
 		
@@ -333,7 +335,7 @@ dataBase.insertSecondaryPlayer = function(players, callback) {
         for (var i = 0; i < players.length; ++i) {
             data =  players[i];
             var position_id = 0;
-            if('P' == data.posicion ) {
+            if(isPicher) {
             	position_id = 1;
             }else {
             	position_id = parseInt(data.posicion_id);
@@ -409,6 +411,25 @@ router.get('/registerTeam', function(req, res, next) {
 
 Promise.promisifyAll(apiLocal);
 
+
+/* GET teams listing. (simplified callback hell) */
+router.get('/time', function(req, res, next) {
+    var teams = [];
+    var done = false;
+    var callbackCount = 0;
+    for (var i = 1; i < 9; i++){
+        apiQB.getTeam(i, function(error, team) {
+            teams.push(team);
+            callbackCount++;
+            if (callbackCount == 8) {
+                teamModel.updateTeams(teams);
+                res.json(teams);
+                done = true;
+            }
+        });
+    }
+});
+
 router.get('/registerRoster', function(req, res, next) {
 	
 	var rosters = [];
@@ -464,18 +485,22 @@ router.get('/insertPicher', function(req, res, next) {
 
             //Parallel calls, for each team id call the api
             async.each(idPichers, function(id, callback) {
-                apiQB.getPicher(id, function(error, picher) {
-                    //TODO handle error
-                	arrPichers.push(picher);
-                    callback(); //callback is required in order to let each no this iteration is finished
-                })
+
+                    apiQB.getPicher(id, function(error, picher) {
+                        //TODO handle error
+                        arrPichers.push(picher);
+                        callback(); //callback is required in order to let each no this iteration is finished
+
+                    })
+
+
             }, function(err){ //this function is called when all the previous call are completed
                 if( err ) {
                 	error.registerInBD(err, '100211');//TODO agregar error
                     res.json(error.jsonError('100211'));//TODO agregar error
                 } else {
                 	//res.json(arrPichers);
-                	dataBase.insertSecondaryPlayer(arrPichers, function(err){ //this function is called when all the previous call are completed
+                	dataBase.insertSecondaryPlayer(arrPichers, true, function(err){ //this function is called when all the previous call are completed
                         if( err ) {
                         	error.registerInBD(err, '100211');//TODO agregar error
                             res.json(error.jsonError('100211'));//TODO agregar error
@@ -521,7 +546,7 @@ router.get('/insertPlayer', function(req, res, next) {
                     res.json(error.jsonError('100211'));//TODO agregar error
                 } else {
                 	//res.json(arrPlayers);
-                	dataBase.insertSecondaryPlayer(arrPlayers, function(err){ //this function is called when all the previous call are completed
+                	dataBase.insertSecondaryPlayer(arrPlayers, false, function(err){ //this function is called when all the previous call are completed
                         if( err ) {
                         	error.registerInBD(err, '100211');//TODO agregar error
                             res.json(error.jsonError('100211'));//TODO agregar error

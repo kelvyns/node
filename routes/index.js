@@ -1,5 +1,5 @@
 var express = require('express');
-
+var Promise = require('bluebird');
 var moduleRef = require('../bussines_logic/services');
 var util = require('../util/util');
 var mock = require('../test/builder');
@@ -8,7 +8,16 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.send('hi');
+
+	Promise.delay(1000).then(function() {
+		console.log("500 ms passed");
+		return "Hello world";
+	}).delay(1000).then(function(helloWorldString) {
+		console.log(helloWorldString);
+		console.log("another 500 ms passed") ;
+		res.send('hi');
+	});
+
 });
 
 /* GET home page. */
