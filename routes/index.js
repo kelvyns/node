@@ -3,6 +3,7 @@ var Promise = require('bluebird');
 var moduleRef = require('../bussines_logic/services');
 var util = require('../util/util');
 var mock = require('../test/builder');
+var db = require('../lib/db');
 
 var router = express.Router();
 
@@ -17,8 +18,35 @@ router.get('/', function(req, res, next) {
 		console.log("another 500 ms passed") ;
 		res.send('hi');
 	});
+	
+
 
 });
+
+/* GET home page. */
+router.get('/selectPlayer', function(req, res, next) {
+	
+	 db.getAll(db.table.player, function(err, players) {
+         if(err){
+        	 res.json({"code" : 400, "status" : "error al consultar la tabla player"});
+         }else {
+             res.json({"code" : 200, "status" : "Success", "total players" : players.length, "players" : players});
+         }
+     });
+});
+
+/* GET home page. */
+router.get('/selectTeam', function(req, res, next) {
+	
+	 db.getAll(db.table.team, function(err, teams) {
+         if(err){
+        	 res.json({"code" : 400, "status" : "error al consultar la tabla teams"});
+         }else {
+             res.json({"code" : 200, "status" : "Success", "total teams" : teams.length, "teams" : teams});
+         }
+     });
+});
+
 
 /* GET home page. */
 router.get('/tabla', function(req, res, next) {
