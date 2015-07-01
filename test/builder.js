@@ -78,7 +78,7 @@ exports.roster = function(id_team) {
 };
 
 exports.biopelotero = function(id_player, id_equipo) {
-	var x = '{"success":1,"message":"Registros recuperados","data":{"rows":[{"id_jugador":"' + id_player + '","nombre":"CESAR","apellido":"SUAREZ","id_equipo":"' + id_equipo + '","equipo":"TIBURONES","talla":"1,80","peso":"80","edad":"31","fecha_nacimiento":"1983-08-17","mano_campo":"D","mano_bateo":"D","posicion_id":"7","posicion":"LF","numero_franela":"18","lugar_nacimiento":"MARACAIBO","pais_nacimiento":"VZLA"}]},"total":1}';
+	var x = '{"success":1,"message":"Registros recuperados","data":{"rows":[{"id_jugador":"' + id_player + '","nombre":"CESAR","apellido":"SUAREZ","id_equipo":"' + id_equipo + '","equipo":"TIBURONES","talla":"1,80","peso":"80","edad":"31","fecha_nacimiento":"1983-08-17","mano_campo":"Z","mano_bateo":"Z","posicion_id":"7","posicion":"LF","numero_franela":"18","lugar_nacimiento":"MARACAIBO","pais_nacimiento":"VZLA"}]},"total":1}';
 	return JSON.parse(x);
 };
 
