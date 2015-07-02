@@ -1,7 +1,5 @@
 var express = require('express');
 var Promise = require('bluebird');
-var moduleRef = require('../bussines_logic/services');
-var util = require('../lib/util');
 var mock = require('../test/builder');
 var db = require('../lib/db');
 
@@ -24,7 +22,7 @@ router.get('/', function(req, res, next) {
 /* GET home page. */
 router.get('/selectPlayer', function(req, res, next) {
 	
-	 db.getAll(db.table.player, function(err, players) {
+	 db.getAll("PLAYER", function(err, players) {
          if(err){
         	 res.json({"code" : 400, "status" : "error al consultar la tabla player"});
          }else {
@@ -36,7 +34,7 @@ router.get('/selectPlayer', function(req, res, next) {
 /* GET home page. */
 router.get('/selectTeam', function(req, res, next) {
 	
-	 db.getAll(db.table.team, function(err, teams) {
+	 db.getAll("TEAM", function(err, teams) {
          if(err){
         	 res.json({"code" : 400, "status" : "error al consultar la tabla teams"});
          }else {
@@ -46,52 +44,6 @@ router.get('/selectTeam', function(req, res, next) {
 });
 
 
-/* GET home page. */
-router.get('/tabla', function(req, res, next) {
-	
-	var table = 'tabla';
-	var columns = 'a,b,c';
-	var columnsUpdate = 'b,c';
-	var allValues = [];
-	allValues.push("(1,2,3)");
-	allValues.push("(1,2,3)");
-	var sql = util.massiveInsertFormat(table, columns, columnsUpdate, allValues);
-	console.log(sql);
-	moduleRef.handle_database(req,res, sql);
-});
-
-router.get("/player",function(req,res){
-	var sql = 'SELECT * FROM player';
-	moduleRef.handle_database(req,res, sql);
-});
-
-router.get("/insertTeam",function(req,res){
-
-
-	var total_team = 8;
-	var id_equipo;
-	for (var i = 0; i < 8; i++) {
-		id_equipo = i + 1;
-		moduleRef.insertTeam( id_equipo);
-	};
-
-	res.json({"code" : 0, "status" : "Success Team"});
-	
-});
-
-router.get("/insertPlayer",function(req,res){
-
-	moduleRef.insertPlayer();
-	res.json({"code" : 0, "status" : "Success Player"});
-	
-});
-
-router.get("/team",function(req,res){
-	//
-	var data = moduleRef.getTeams();
-	console.log('data lala  ' + data);
-	res.json(data);
-});
 
 router.get("/api/",function(req,res){
 	//
