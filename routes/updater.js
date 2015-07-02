@@ -145,9 +145,10 @@ var request = request.defaults({
 });
 /* GET teams listing. (simplified callback hell) */
 router.get('/init', function(req, res, next) {
-	
-	
-	request(apiLocal.getUrl('registerInitialRoster'), function(err, response, rosters) {
+
+	var season = req.query.season; // 2014
+	var period = req.query.period; //  (Periodo : TR, RR , F)
+	request(apiLocal.getUrl('registerInitialRoster',  { 'season': season, 'period': period }), function(err, response, rosters) {
         //console.log(response.statusCode);
         //TODO handle 500, 401, 403 etc
         if (err || response.statusCode != 200) {
