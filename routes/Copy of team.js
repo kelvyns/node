@@ -5,7 +5,7 @@ var async = require('async');
 var Promise = require('bluebird');
 // My own libraries
 var db = require('../lib/db');
-var util = require('../util/util');
+var util = require('../lib/util');
 var error = require('../control_error/error');
 var teamModel = require('../models/team');
 
@@ -91,7 +91,7 @@ router.get('/', function(req, res, next) {
                                 apiQB.getTeam(8, function(error, team){
                                     teams.push(team);
                                     //After loading 8 teams, callback
-                                    teamModel.updateTeams(teams);
+                                    console.log(teams);
                                     res.json(teams);
                                 });
                             });
@@ -114,7 +114,7 @@ router.get('/callback2', function(req, res, next) {
             teams.push(team);
             callbackCount++;
             if (callbackCount == 8) {
-                teamModel.updateTeams(teams);
+            	console.log(teams);
                 res.json(teams);
                 done = true;
             }
