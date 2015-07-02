@@ -1,7 +1,7 @@
 var express = require('express');
 var Promise = require('bluebird');
 var moduleRef = require('../bussines_logic/services');
-var util = require('../util/util');
+var util = require('../lib/util');
 var mock = require('../test/builder');
 var db = require('../lib/db');
 
@@ -19,8 +19,6 @@ router.get('/', function(req, res, next) {
 		res.send('hi');
 	});
 	
-
-
 });
 
 /* GET home page. */
@@ -95,7 +93,7 @@ router.get("/team",function(req,res){
 	res.json(data);
 });
 
-router.get("/api/mock",function(req,res){
+router.get("/api/",function(req,res){
 	//
 	var id_jugador = req.param('id_jugador');
 	var token = req.param('token');
@@ -106,7 +104,7 @@ router.get("/api/mock",function(req,res){
 
 
 
-router.get("/api/mock/equipo*",function(req,res){
+router.get("/api/equipo*",function(req,res){
 	//
 	var id_equipo = req.query.id_equipo;
 	var access_token = req.query.access_token;
@@ -123,7 +121,7 @@ router.get("/api/mock/equipo*",function(req,res){
 	
 });
 
-router.get("/api/mock/biopelotero*",function(req,res){
+router.get("/api/biopelotero*",function(req,res){
 	//
 	var id_jugador = req.query.id_jugador;
 	var access_token = req.query.access_token;
@@ -138,7 +136,7 @@ router.get("/api/mock/biopelotero*",function(req,res){
 	res.json(data);
 });
 
-router.get("/api/mock/biolanzador*",function(req,res){
+router.get("/api/biolanzador*",function(req,res){
 	//
 	var id_jugador = req.query.id_jugador;
 	var access_token = req.query.access_token;
@@ -154,7 +152,7 @@ router.get("/api/mock/biolanzador*",function(req,res){
 });
 
 
-router.get("/api/mock/roster*",function(req,res){
+router.get("/api/roster*",function(req,res){
 	//
 	var id_equipo = req.query.id_equipo;
 	var access_token = req.query.access_token;
