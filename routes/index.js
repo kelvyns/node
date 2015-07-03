@@ -2,6 +2,7 @@ var express = require('express');
 var Promise = require('bluebird');
 var mock = require('../test/builder');
 var db = require('../lib/db');
+var error = require('../models/error');
 
 var router = express.Router();
 
@@ -18,6 +19,15 @@ router.get('/', function(req, res, next) {
 	});
 	
 });
+
+/* GET home page. */
+router.get('/error', function(req, res, next) {
+	var err = {"code" : 400, "status" : "error al consultar la tabla player"};
+	error.registerInBD(err, '100203', "otra descrition");
+	res.json({"code" : 200, "status" : "Success"});
+   
+});
+
 
 /* GET home page. */
 router.get('/selectPlayer', function(req, res, next) {
