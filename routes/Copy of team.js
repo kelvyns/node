@@ -6,7 +6,7 @@ var Promise = require('bluebird');
 // My own libraries
 var db = require('../lib/db');
 var util = require('../lib/util');
-var error = require('../control_error/error');
+var error = require('../models/error');
 var teamModel = require('../models/team');
 
 var router = express.Router();

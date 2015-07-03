@@ -1,6 +1,22 @@
+
+var db = require('../lib/db');
+var dateformat = require('dateformat');
 var error = {};
 
-function sendMail(err, errCode, otherDescription) {
+error.table = "ERROR";
+
+
+error.save = function (errorEntity){
+    db.statement("INSERT INTO "+ error.table+" VALUES ?", errorEntity, function(err, rows) {
+        if(err){
+            console.log("Error, Can't save the error in BD");
+        }else {
+            console.log("Error, Saved error in BD");
+        }
+    });
+};
+
+error.sendMail = function (err, errCode, otherDescription) {
     //TODO we should be register error in database for critical error
     console.log("Error, Error code: "+ errCode);
     console.log("Error, Description: "+ error.code [errCode] );
@@ -15,22 +31,27 @@ function sendMail(err, errCode, otherDescription) {
 
 }
 
-function registerInBD(err, errCode, otherDescription) {
+error.registerInBD = function (err, errCode, otherDescription) {
     //TODO we should be register error in database for critical error
     console.log("Error, Error code: "+ errCode);
     console.log("Error, Description: "+ error.code [errCode] );
+    var descriptionO = "";
     if(otherDescription) {
-        console.log("Error, More description: "+ otherDescription );
+        descriptionO = otherDescription;
+        console.log("Error, More description: "+ descriptionO );
     }
+    var jsonError = "";
     if(err) {
         jsonError = JSON.stringify(err);
         console.log("Error, JsonError: "+ jsonError );
     }
     console.log("Error, Creating register of error in DataBase");
-
+    var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
+    var errorEntity = {code : errCode, err : jsonError, description : descriptionO, last_updated: date};
+    error.save(errorEntity);
 }
 
-function jsonError(errCode, descrition) {
+error.jsonError = function (errCode, descrition) {
    
     var jsonError = {};
     jsonError.code = errCode;
@@ -44,6 +65,7 @@ function jsonError(errCode, descrition) {
 }
 
 error.code = [];
+
 // Data base
 error.code['100101'] = 'Cannot connect to Database server';
 error.code['100103'] = 'Cannot make to select in BD';
@@ -79,9 +101,4 @@ error.jsonDefault = {};
 error.jsonDefault.status = "err";
 error.jsonDefault.mesage = "An unexpected error has occurred"; 
 
-
-
-error.registerInBD = registerInBD;
-error.sendMail = sendMail;
-error.jsonError = jsonError;
 module.exports = error;

@@ -5,7 +5,7 @@ var async = require('async'); // estudiar para sacarla
 var Promise = require('bluebird');
 // My own libraries
 
-var error = require('../lib/error');
+var error = require('../models/error');
 var apiQB = require('../lib/apiQB');
 var apiLocal = require('../lib/apiLocal');
 

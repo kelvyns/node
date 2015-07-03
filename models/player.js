@@ -1,6 +1,6 @@
 //Model team
 var db = require('../lib/db');
-var error = require('../lib/error');
+var error = require('./error');
 var util = require('../lib/util');
 var dateformat = require('dateformat');
 
