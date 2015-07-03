@@ -1,44 +1,28 @@
-
 var db = require('../lib/db');
 var dateformat = require('dateformat');
 var error = {};
 
 error.table = "ERROR";
 
-
 error.save = function (errorEntity){
-    db.statement("INSERT INTO "+ error.table+" VALUES ?", errorEntity, function(err, rows) {
+	//console.log(errorEntity);
+     db.statement("INSERT INTO " + error.table + " SET ?", errorEntity, function(err, rows) {
         if(err){
+        	console.log(err);
+        	console.log(JSON.stringify(err));
             console.log("Error, Can't save the error in BD");
-        }else {
-            console.log("Error, Saved error in BD");
         }
     });
 };
-
-error.sendMail = function (err, errCode, otherDescription) {
-    //TODO we should be register error in database for critical error
-    console.log("Error, Error code: "+ errCode);
-    console.log("Error, Description: "+ error.code [errCode] );
-    if(otherDescription) {
-        console.log("Error, More description: "+ otherDescription );
-    }
-    if(err) {
-        jsonError = JSON.stringify(err);
-        console.log("Error, JsonError: "+ jsonError );
-    }
-    console.log("Error, Senting mail with the error");
-
-}
 
 error.registerInBD = function (err, errCode, otherDescription) {
     //TODO we should be register error in database for critical error
     console.log("Error, Error code: "+ errCode);
     console.log("Error, Description: "+ error.code [errCode] );
-    var descriptionO = "";
+    var desc = error.code [errCode];
     if(otherDescription) {
-        descriptionO = otherDescription;
-        console.log("Error, More description: "+ descriptionO );
+    	desc = desc +". "+ otherDescription;
+        console.log("Error, More description: "+ otherDescription );
     }
     var jsonError = "";
     if(err) {
@@ -47,22 +31,22 @@ error.registerInBD = function (err, errCode, otherDescription) {
     }
     console.log("Error, Creating register of error in DataBase");
     var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
-    var errorEntity = {code : errCode, err : jsonError, description : descriptionO, last_updated: date};
+    var errorEntity = {code : errCode, err : jsonError, description : desc, last_updated: date};
     error.save(errorEntity);
-}
+};
 
-error.jsonError = function (errCode, descrition) {
+error.jsonError = function (errCode, description) {
    
     var jsonError = {};
     jsonError.code = errCode;
     jsonError.status = 'err';
-    if(descrition) {
-    	jsonError.description = descrition;
+    if(description) {
+    	jsonError.description = description;
     }else {
     	jsonError.description = error.genericUnexpectedError;
     }
     return jsonError;
-}
+};
 
 error.code = [];
 
