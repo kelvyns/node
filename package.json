@@ -13,6 +13,7 @@
     "express": "~4.12.4",
     "mysql": "^2.7.0",
     "request": "^2.58.0",
-    "dateformat":  "^1.0.11"
+    "dateformat":  "^1.0.11",
+    "nodemailer": "^1.4.0"
   }
 }
