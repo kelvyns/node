@@ -2,6 +2,7 @@ var express = require('express');
 var Promise = require('bluebird');
 var mock = require('../test/builder');
 var db = require('../lib/db');
+var mail = require('../lib/mail');
 var error = require('../models/error');
 
 var router = express.Router();
@@ -10,41 +11,9 @@ var nodemailer = require('nodemailer');
 /* GET home page. */
 router.get('/sendemail', function(req, res, next) {
 
-	// Create a SMTP transporter object
-	// create reusable transport method (opens pool of SMTP connections)
-	var smtpTransport = nodemailer.createTransport({
-		service: "Gmail",
-		auth: {
-			user: 'asdasd@gmail.com',
-			pass: 'xxxxxxxxxxx'
-		}
-	});
-
-	console.log('SMTP Configured');
-
-// setup e-mail data with unicode symbols
-	var mailOptions = {
-		from: "asdasd@gmail.com", // sender address
-		to: "asdasd@gmail.com", // list of receivers
-		subject: "Hello ✔ test nodemailer", // Subject line
-		text: "Hello world ✔", // plaintext body
-		html: "<b>La gente canta con amor que vivaaa espanaaa✔</b>" // html body
-	}
-
-// send mail with defined transport object
-	smtpTransport.sendMail(mailOptions, function(error, response){
-		if(error){
-			console.log(error);
-		}else{
-
-			console.log("Message sent: " + response);
-			res.send('Mail sent');
-		}
-
-		// if you don't want to use this transport object anymore, uncomment following line
-		//smtpTransport.close(); // shut down the connection pool, no more messages
-	});
-
+	var err = {"code" : 400, "status" : "unavailable conection with database"};
+	mail.sendError(err, '100101', 'getConnection, getAll table: PLAYER');
+	res.send('hi');
 
 });
 

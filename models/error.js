@@ -16,7 +16,6 @@ error.save = function (errorEntity){
 };
 
 error.registerInBD = function (err, errCode, otherDescription) {
-    //TODO we should be register error in database for critical error
     console.log("Error, Error code: "+ errCode);
     console.log("Error, Description: "+ error.code [errCode] );
     var desc = error.code [errCode];
@@ -29,7 +28,7 @@ error.registerInBD = function (err, errCode, otherDescription) {
         jsonError = JSON.stringify(err);
         console.log("Error, JsonError: "+ jsonError );
     }
-    console.log("Error, Creating register of error in DataBase");
+    console.log("Creating register of error in DataBase");
     var date = dateformat(new Date(), "yyyy-mm-dd h:MM:ss");
     var errorEntity = {code : errCode, err : jsonError, description : desc, last_updated: date};
     error.save(errorEntity);
