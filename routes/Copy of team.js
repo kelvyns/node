@@ -183,7 +183,7 @@ router.get('/asyncWithNumbers', function(req, res, next) {
         } else {
             console.log(teams);
         }
-        res.sendError("done");
+        res.send("done");
     });
 });
 
@@ -251,7 +251,7 @@ router.get('/promises3', function(req, res, next) {
 
     //Se pasa... xD
     Promise.all(teams).then(function(result) {
-        res.sendError(result);
+        res.send(result);
     });
 });
 

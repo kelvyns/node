@@ -13,7 +13,7 @@ router.get('/sendemail', function(req, res, next) {
 
 	var err = {"code" : 400, "status" : "unavailable conection with database"};
 	mail.sendError(err, '100101', 'getConnection, getAll table: PLAYER');
-	res.send('hi');
+	res.send('Its not problem if there is a error');
 
 });
 
