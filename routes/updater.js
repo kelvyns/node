@@ -11,12 +11,44 @@ var apiLocal = require('../lib/apiLocal');
 
 var teamModel = require('../models/team');
 var playerModel = require('../models/player');
+var gameModel = require('../models/game');
 
 var router = express.Router();
 
 Promise.promisifyAll(apiQB);
 
 Promise.promisifyAll(apiLocal);
+
+router.get('/registerGame', function(req, res, next) {
+	
+	var season = req.query.season; // 2014
+    var period = req.query.period; // (Periodo : TR, RR , F)
+    var date = req.query.date; // fecha=2014-10-09
+	apiQB.getCalendar(season, period, date, function(err, games) {
+		if(err){
+        	res.json(error.jsonError('100400'));
+        }else {
+        	//res.json({"code" : 200, "status" : "Success Game", "Games" : games});
+        	
+        	gameModel.saveAll( games , function(err, rows) {
+                if(err){
+                	res.json(error.jsonError('100400'));
+                }else {
+                	gameModel.getAll(date, function(err, allGames) {
+                        if(err){// TODO add error
+                            res.json(error.jsonError('100401'));
+                        }else {
+                            res.json({"code" : 200, "status" : "Success Game", "Games" : allGames});
+                        }
+                    });
+
+                };
+        	});
+        }
+		
+	});
+   
+});
 
 router.get('/registerTeam', function(req, res, next) {
     var teams = [];
@@ -32,7 +64,7 @@ router.get('/registerTeam', function(req, res, next) {
                     if(err){
                         res.json(error.jsonError('100203'));
                     }else {
-                        res.json({"code" : 0, "status" : "Success Team", "teams" : teams});
+                        res.json({"code" : 200, "status" : "Success Team", "teams" : teams});
                     }
                 });
 
@@ -66,7 +98,7 @@ router.get('/registerInitialRoster', function(req, res, next) {
 			        		res.json(allPlayers);
 			        	});
 			        }
-			        //res.json({"code" : 0, "status" : "Success rosters", "rosters" : rosters});
+			        //res.json({"code" : 200, "status" : "Success rosters", "rosters" : rosters});
 			    });
 		    }).catch(function(e) {
 		    	res.json(error.jsonError('100207', error.genericConecctionError));
@@ -157,7 +189,7 @@ router.get('/init', function(req, res, next) {
             error.registerInBD(err, '100200', 'Error,dasasdasdasdasd ');
             callback(err, null);
         } else {
-        	//res.json({"code" : 0, "status" : "Success rosters", "rosters" : rosters});
+        	//res.json({"code" : 200, "status" : "Success rosters", "rosters" : rosters});
         	request(apiLocal.getUrl('updatePicher'), function(err, response, pichers) {
                 //console.log(response.statusCode);
                 //TODO handle 500, 401, 403 etc
