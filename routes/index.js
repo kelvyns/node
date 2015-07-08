@@ -53,16 +53,45 @@ router.get('/selectPlayer', function(req, res, next) {
 });
 
 /* GET home page. */
-router.get('/selectTeam', function(req, res, next) {
+router.get('/select', function(req, res, next) {
+	var table = req.query.table;
+	var condition = req.query.condition;
 	
-	 db.getAll("TEAM", function(err, teams) {
-         if(err){
-        	 res.json({"code" : 400, "status" : "error al consultar la tabla teams"});
-         }else {
-             res.json({"code" : 200, "status" : "Success", "total teams" : teams.length, "teams" : teams});
-         }
-     });
+	if( condition ) {
+		console.log('condition: '+ condition);
+		 db.getAllByCondition(table, condition, function(err, arrs) {
+	         if(err){
+	        	 res.json({"code" : 400, "status" : "error al consultar la tabla "+ table});
+	         }else {
+	             res.json({"code" : 200, "status" : "Success", "total " : arrs.length, table : arrs});
+	         }
+	     });
+	}else {
+		db.getAll(table, function(err, arrs) {
+	         if(err){
+	        	 res.json({"code" : 400, "status" : "error al consultar la tabla "+ table});
+	         }else {
+	             res.json({"code" : 200, "status" : "Success", "total " : arrs.length, "rows" : arrs});
+	         }
+	     });
+		 
+	}
 });
+
+/* GET home page. */
+router.get('/query', function(req, res, next) {
+	var sql = req.query.sql;
+	
+	 db.query(sql, function(err, rows) {
+	     if(err){
+	    	 res.json({"code" : 400, "status" : "error con el sql:"+ sql});
+	     }else {
+	         res.json({"code" : 200, "status" : "Success", "rows" : rows});
+	     }
+	 });
+	
+});
+
 
 
 
@@ -133,6 +162,25 @@ router.get("/api/roster*",function(req,res){
 	var data = '';
 	if( access_token == '45eadc85b650776e48bdf666120d0fbc') {
 		data = mock.roster(parseInt(id_equipo));
+	}else {
+		resString = '{"success":2,"message":"Registros recuperados","data":{"rows":{"httpcode":"403","error":"Forbidden","info":"No tiene los permisos necesarios para acceder a este recurso"}},"total":3}';
+		data = JSON.parse(resString);	
+	}
+	
+	res.json(data);
+	
+});
+
+router.get("/api/calendario*",function(req,res){
+	//
+	var season = req.query.temporada;
+	var period = req.query.periodo;
+	var date = req.query.fecha;
+	var access_token = req.query.access_token;
+	var resString = '';
+	var data = '';
+	if( access_token == '45eadc85b650776e48bdf666120d0fbc') {
+		data = mock.calendar(season,period,date);
 	}else {
 		resString = '{"success":2,"message":"Registros recuperados","data":{"rows":{"httpcode":"403","error":"Forbidden","info":"No tiene los permisos necesarios para acceder a este recurso"}},"total":3}';
 		data = JSON.parse(resString);	
