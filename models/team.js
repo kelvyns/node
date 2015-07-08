@@ -46,7 +46,6 @@ team.saveAll = function(teams, callback) {
         db.query(sql, function(err, rows){
            if(err){
                error.registerInBD(err, '100202');
-               if(err)
                callback(err, null);
            }else {
                callback(null, rows);
