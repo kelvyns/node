@@ -71,11 +71,19 @@ error.code['100212'] = 'Cannot gets the player from the api league';
 error.code['100213'] = 'Invalid data from api league for getPlayer';
 error.code['100214'] = 'Cannot gets the picher from the api league';
 error.code['100215'] = 'Invalid data from api league for getPicher';
+error.code['100216'] = 'Cannot gets the all calendar for load the games';
+error.code['100217'] = 'Invalid data from api league for calendar';
+error.code['100218'] = 'Cannot gets the list of games from the database';
+error.code['100219'] = 'Cannot insert the list of games in database';
+error.code['100220'] = 'Cannot gets the list of games from the fuction insertTeam';
 
 // api local
 error.code['100300'] = 'Error to connect with api local';
 error.code['100301'] = 'Invalid data from api local for registerRoster';
 error.code['100302'] = 'Cannot gets the list of teams from the api local';
+
+error.code['100400'] = 'Cannot save the games in updater';
+error.code['100401'] = 'Cannot get the games in updater';
 
 error.genericInternalError = 'An internal error occurred, please contact the administrator';
 error.genericConecctionError = 'We have some problems with the conection, please try again later';
