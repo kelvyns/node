@@ -105,7 +105,6 @@ player.saveByRoster = function(rosters, callback) {
         db.query(sql, function(err, rows){
            if(err){
                error.registerInBD(err, '100208');
-               if(err)
                callback(err, null);
            }else {
                callback(null, rows);
@@ -162,7 +161,6 @@ player.saveAll = function(players, isPicher, callback) {
         db.query(sql, function(err, rows){
            if(err){
                error.registerInBD(err, '100208');//TODO agregar error
-               if(err)
                callback(err, null);
            }else {
                callback(null, rows);
